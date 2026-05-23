@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GANT Platform Reference — Code Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0d1117;color:#e6edf3;font-family:'SF Mono','Fira Code','Consolas',monospace}
+nav{background:#161b22;border-bottom:1px solid #30363d;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nav-logo{font-size:13px;color:#8b949e;letter-spacing:.5px}
+.nav-logo span{color:#C9A84C;font-weight:700}
+.nav-links{display:flex;gap:4px}
+.nav-links a{color:#8b949e;text-decoration:none;font-size:12px;padding:6px 12px;border-radius:6px;transition:all .15s}
+.nav-links a:hover{background:#21262d;color:#e6edf3}
+.layout{display:flex;height:calc(100vh - 52px)}
+.sidebar{width:260px;background:#0d1117;border-right:1px solid #21262d;overflow-y:auto;flex-shrink:0}
+.sidebar-section{padding:12px 0}
+.sidebar-title{font-size:10px;color:#8b949e;letter-spacing:1.2px;text-transform:uppercase;padding:4px 16px 8px}
+.sidebar-item{display:block;padding:6px 16px;font-size:12px;color:#8b949e;cursor:pointer;text-decoration:none;border-left:2px solid transparent;transition:all .12s}
+.sidebar-item:hover{color:#e6edf3;background:#161b22}
+.sidebar-item.active{color:#C9A84C;border-left-color:#C9A84C;background:#161b2230}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.file-header{background:#161b22;border-bottom:1px solid #30363d;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.file-info{display:flex;align-items:center;gap:12px}
+.dots{display:flex;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%}
+.fname{font-size:13px;color:#e6edf3;font-weight:500}
+.fmeta{font-size:11px;color:#8b949e;margin-top:2px}
+.copy-btn{background:#21262d;border:1px solid #30363d;color:#8b949e;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;flex-shrink:0}
+.copy-btn:hover{background:#30363d;color:#e6edf3}
+.copy-btn.ok{color:#3fb950;border-color:#3fb950}
+.code-wrap{flex:1;overflow:auto;padding:20px 24px}
+pre{font-size:12.5px;line-height:1.75;tab-size:4;white-space:pre}
+.ln{display:inline-block;color:#484f58;text-align:right;padding-right:20px;user-select:none;width:36px;flex-shrink:0}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#484f58;gap:10px}
+.empty svg{opacity:.25}
+.empty p{font-size:13px}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo"><span>GANT</span> Exchange &nbsp;·&nbsp; Platform Reference</div>
+  <div class="nav-links">
+    <a href="https://github.com/davidibironke02-GANT/gant-platform-reference" target="_blank">GitHub &nbsp;&#8599;</a>
+  </div>
+</nav>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">02 · Physical Infrastructure</div>
+      <a class="sidebar-item" href="#weighbridge_nir">weighbridge_nir.py</a>
+      <a class="sidebar-item" href="#greengrass_edge">greengrass_edge.yaml</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">03 · Container IoT</div>
+      <a class="sidebar-item" href="#device_provisioning">device_provisioning.py</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">04 · Exchange &amp; Trade Engine</div>
+      <a class="sidebar-item" href="#batch_ids">batch_ids.py</a>
+      <a class="sidebar-item" href="#vvi_engine">vvi_engine.py</a>
+      <a class="sidebar-item" href="#ai_listing_price">ai_listing_price.py</a>
+      <a class="sidebar-item" href="#qr_service">qr_service.py</a>
+      <a class="sidebar-item" href="#compliance_documents">compliance_documents.py</a>
+      <a class="sidebar-item" href="#audit_hash_service">audit_hash_service.py</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">05 · Fintech Settlement</div>
+      <a class="sidebar-item" href="#forex_cache">forex_cache.py</a>
+      <a class="sidebar-item" href="#phantom_order">phantom_order_prevention.py</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">06 · Intelligence</div>
+      <a class="sidebar-item" href="#cre_scoring">cre_scoring_engine.py</a>
+      <a class="sidebar-item" href="#dsre_pipeline">dsre_pipeline.py</a>
+      <a class="sidebar-item" href="#claude_dsre">claude_dsre_advisory.py</a>
+      <a class="sidebar-item" href="#gev_anonymisation">gev_anonymisation.py</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">07 · Data Architecture</div>
+      <a class="sidebar-item" href="#row_level_security">row_level_security.sql</a>
+    </div>
+  </div>
+  <div class="main" id="main">
+    <div class="empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <p>Select a file from the sidebar</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/davidibironke02-GANT/gant-platform-reference/main/';
+
+const FILES = {
+  weighbridge_nir:      { name:'weighbridge_nir.py',           section:'2.6 · Weighbridge and NIR Integration',          lang:'Python · AWS Lambda · Greengrass',        path:'02-physical-infrastructure/weighbridge_nir.py' },
+  greengrass_edge:      { name:'greengrass_edge.yaml',          section:'2.7 · IoT Greengrass Edge Configuration',        lang:'YAML · AWS IoT Greengrass',               path:'02-physical-infrastructure/greengrass_edge.yaml' },
+  device_provisioning:  { name:'device_provisioning.py',        section:'3.4 · Device Provisioning and Decommissioning',  lang:'Python · AWS Lambda',                     path:'03-container-iot/device_provisioning.py' },
+  batch_ids:            { name:'batch_ids.py',                  section:'4.3 · BatchID and BatchLotID Generation',        lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/batch_ids.py' },
+  vvi_engine:           { name:'vvi_engine.py',                 section:'4.4 · VVI Computation Engine',                   lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/vvi_engine.py' },
+  ai_listing_price:     { name:'ai_listing_price.py',           section:'4.5 · AI Listing Price Engine',                  lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/ai_listing_price.py' },
+  qr_service:           { name:'qr_service.py',                 section:'4.6 · QR Service',                               lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/qr_service.py' },
+  compliance_documents: { name:'compliance_documents.py',       section:'4.7 · Compliance Document Generation',           lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/compliance_documents.py' },
+  audit_hash_service:   { name:'audit_hash_service.py',         section:'4.8 · SHA-256 Audit Hash Service',               lang:'Python · AWS Lambda',                     path:'04-exchange-trade-engine/audit_hash_service.py' },
+  forex_cache:          { name:'forex_cache.py',                section:'5.3 · FOREX Rate Fetch and Cache Logic',         lang:'Python · AWS Lambda',                     path:'05-fintech-settlement/forex_cache.py' },
+  phantom_order:        { name:'phantom_order_prevention.py',   section:'5.4 · Phantom Order Prevention',                 lang:'Python · AWS Lambda',                     path:'05-fintech-settlement/phantom_order_prevention.py' },
+  cre_scoring:          { name:'cre_scoring_engine.py',         section:'6.2 · CRE Scoring Engine',                       lang:'Python · AWS Lambda · WatsonX',           path:'06-intelligence/cre_scoring_engine.py' },
+  dsre_pipeline:        { name:'dsre_pipeline.py',              section:'6.3 · DSRE Aggregation Pipeline',                lang:'Python · AWS Lambda · WatsonX',           path:'06-intelligence/dsre_pipeline.py' },
+  claude_dsre:          { name:'claude_dsre_advisory.py',       section:'6.5 · Claude Explanation Layer',                 lang:'Python · Anthropic Claude API',           path:'06-intelligence/claude_dsre_advisory.py' },
+  gev_anonymisation:    { name:'gev_anonymisation.py',          section:'6.6 · GEV Anonymisation Pipeline',               lang:'Python · AWS Lambda',                     path:'06-intelligence/gev_anonymisation.py' },
+  row_level_security:   { name:'row_level_security.sql',        section:'7.4 · Row-Level Security',                       lang:'PostgreSQL · Aurora',                     path:'07-data-architecture/row_level_security.sql' },
+};
+
+const KW_PY = ['import','from','def','return','class','if','else','elif','for','while','try','except','raise','with','as','not','in','and','or','None','True','False','lambda','yield','async','await','pass','global'];
+const BI_PY = ['str','dict','list','int','float','bool','len','range','print','round','type','isinstance','Exception','ValueError','RuntimeError','KeyError','TypeError'];
+
+function e(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+function hlPy(code){
+  return code.split('\n').map((raw,i)=>{
+    const ln = `<span class="ln">${i+1}</span>`;
+    let h = e(raw);
+    // comments first -- replace whole line
+    if(raw.trimStart().startsWith('#')) return ln+`<span style="color:#8b949e;font-style:italic">${h}</span>`;
+    // strings
+    h = h.replace(/(&quot;(?:[^&]|&(?!quot;))*&quot;|&#x27;(?:[^&]|&(?!#x27;))*&#x27;)/g,
+      m=>`<span style="color:#a5d6ff">${m}</span>`);
+    // numbers
+    h = h.replace(/\b(\d+\.?\d*)\b/g,'<span style="color:#79c0ff">$1</span>');
+    // builtins
+    BI_PY.forEach(b=>{ h=h.replace(new RegExp(`\\b(${b})\\b`,'g'),'<span style="color:#ffa657">$1</span>') });
+    // keywords
+    KW_PY.forEach(k=>{ h=h.replace(new RegExp(`\\b(${k})\\b`,'g'),'<span style="color:#ff7b72">$1</span>') });
+    // function calls
+    h = h.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g,'<span style="color:#d2a8ff">$1</span>');
+    return ln+h;
+  }).join('\n');
+}
+
+function hlSQL(code){
+  const KW=['SELECT','FROM','WHERE','AND','OR','NOT','CREATE','TABLE','INDEX','ON','FOR','ALL','TO','USING','WITH','AS','ENABLE','ROW','LEVEL','SECURITY','POLICY','ROLE','TRUE','FALSE','ALTER','SET','RETURNS','BEGIN','END','LANGUAGE','INSERT','UPDATE','DELETE','JOIN','LEFT','RIGHT','INNER','GROUP','BY','ORDER','HAVING','LIMIT','OFFSET'];
+  return code.split('\n').map((raw,i)=>{
+    const ln=`<span class="ln">${i+1}</span>`;
+    let h=e(raw);
+    if(raw.trimStart().startsWith('--')) return ln+`<span style="color:#8b949e;font-style:italic">${h}</span>`;
+    h=h.replace(/(&#x27;[^&#]*&#x27;)/g,'<span style="color:#a5d6ff">$1</span>');
+    KW.forEach(k=>{ h=h.replace(new RegExp(`\\b(${k})\\b`,'gi'),'<span style="color:#ff7b72">$1</span>') });
+    return ln+h;
+  }).join('\n');
+}
+
+function hlYAML(code){
+  return code.split('\n').map((raw,i)=>{
+    const ln=`<span class="ln">${i+1}</span>`;
+    let h=e(raw);
+    if(raw.trimStart().startsWith('#')) return ln+`<span style="color:#8b949e;font-style:italic">${h}</span>`;
+    h=h.replace(/^(\s*)([\w.-]+)(\s*:)/gm,'$1<span style="color:#ffa657">$2</span><span style="color:#e6edf3">$3</span>');
+    h=h.replace(/:\s+(.+)$/,'(m,v)=>`: <span style="color:#a5d6ff">${v}</span>`');
+    return ln+h;
+  }).join('\n');
+}
+
+function highlight(code, fname){
+  const ext = fname.split('.').pop();
+  if(ext==='sql') return hlSQL(code);
+  if(ext==='yaml'||ext==='yml') return hlYAML(code);
+  return hlPy(code);
+}
+
+let currentCode = '';
+
+async function loadFile(key){
+  const file = FILES[key];
+  if(!file) return;
+
+  document.querySelectorAll('.sidebar-item').forEach(el=>{
+    el.classList.toggle('active', el.getAttribute('href')==='#'+key);
+  });
+
+  document.title = file.name+' · GANT Platform Reference';
+
+  const main = document.getElementById('main');
+  main.innerHTML = `
+    <div class="file-header">
+      <div class="file-info">
+        <div class="dots">
+          <div class="dot" style="background:#ff5f57"></div>
+          <div class="dot" style="background:#febc2e"></div>
+          <div class="dot" style="background:#28c840"></div>
+        </div>
+        <div>
+          <div class="fname">${file.section} &nbsp;<span style="color:#8b949e;font-weight:400">${file.name}</span></div>
+          <div class="fmeta">${file.lang}</div>
+        </div>
+      </div>
+      <button class="copy-btn" id="cb" onclick="doCopy()">Copy</button>
+    </div>
+    <div class="code-wrap"><pre id="pre">Loading...</pre></div>`;
+
+  try {
+    const r = await fetch(BASE+file.path);
+    if(!r.ok) throw new Error();
+    const txt = await r.text();
+    currentCode = txt;
+    document.getElementById('pre').innerHTML = highlight(txt, file.name);
+  } catch(_){
+    document.getElementById('pre').innerHTML =
+      `<span style="color:#ff7b72">File not yet committed to repository.\nCommit ${file.name} to GitHub and it will appear here automatically.</span>`;
+  }
+}
+
+function doCopy(){
+  if(!currentCode) return;
+  navigator.clipboard.writeText(currentCode).then(()=>{
+    const b=document.getElementById('cb');
+    b.textContent='Copied!'; b.classList.add('ok');
+    setTimeout(()=>{ b.textContent='Copy'; b.classList.remove('ok'); },2000);
+  });
+}
+
+function route(){
+  const key = (location.hash||'').replace('#','');
+  if(key && FILES[key]) loadFile(key);
+}
+
+window.addEventListener('hashchange', route);
+document.querySelectorAll('.sidebar-item').forEach(el=>{
+  el.addEventListener('click', e=>{
+    e.preventDefault();
+    const key = el.getAttribute('href').replace('#','');
+    history.pushState(null,'','#'+key);
+    loadFile(key);
+  });
+});
+
+route();
+</script>
+</body>
+</html>
