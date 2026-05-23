@@ -1,0 +1,184 @@
+# 2.7 AWS IoT Greengrass Edge Configuration
+# Greengrass v2 component descriptor for GANT facility edge node
+# Deploys weighbridge Lambda, IoT telemetry bridge, and local buffer
+# Target device: facility edge server running Amazon Linux 2
+
+---
+RecipeFormatVersion: "2020-01-25"
+ComponentName: com.gant.facility.edge
+ComponentVersion: "1.0.0"
+ComponentDescription: >
+  GANT facility edge component. Manages weighbridge and NIR instrument
+  reads, aggregates LoRaWAN sensor broadcasts from Kerlink gateway,
+  buffers telemetry to local SSD during connectivity outages, and
+  forwards all data to AWS IoT Core via MQTT over TLS.
+ComponentPublisher: GANT Global Ltd
+ComponentDependencies:
+  aws.greengrass.LambdaLauncher:
+    VersionRequirement: ">=2.0.0"
+    DependencyType: HARD
+  aws.greengrass.LambdaManager:
+    VersionRequirement: ">=2.0.0"
+    DependencyType: HARD
+  aws.greengrass.TokenExchangeService:
+    VersionRequirement: ">=2.0.0"
+    DependencyType: HARD
+
+ComponentConfiguration:
+  DefaultConfiguration:
+    weighbridge:
+      host: "192.168.1.10"
+      port: 502
+      unit_id: 1
+      poll_interval_seconds: 30
+    nir:
+      port: "/dev/ttyUSB0"
+      baud_rate: 9600
+      timeout_seconds: 5
+    kerlink_gateway:
+      host: "192.168.1.20"
+      port: 1700
+      protocol: "UDP"
+    iot_core:
+      qos: 1
+      topic_prefix: "gant/facility"
+    buffer:
+      enabled: true
+      path: "/var/gant/buffer"
+      max_size_mb: 4096
+      flush_on_reconnect: true
+      max_age_hours: 72
+    logging:
+      level: "INFO"
+      path: "/var/log/gant/edge.log"
+      max_size_mb: 512
+
+Manifests:
+  - Platform:
+      os: linux
+    Lifecycle:
+      Install:
+        Script: |
+          # Create buffer and log directories
+          mkdir -p /var/gant/buffer
+          mkdir -p /var/log/gant
+          chmod 750 /var/gant/buffer
+          chmod 750 /var/log/gant
+
+          # Install Python dependencies
+          pip3 install pymodbus==3.6.2 pyserial==3.5 boto3==1.34.0 \
+                       paho-mqtt==1.6.1 --quiet
+
+          # Verify instrument connectivity
+          python3 -c "
+          from pymodbus.client import ModbusTcpClient
+          c = ModbusTcpClient('{configuration:/weighbridge/host}',
+                              port={configuration:/weighbridge/port}, timeout=3)
+          result = c.connect()
+          c.close()
+          print('Weighbridge connectivity: OK' if result else 'WARNING: Weighbridge unreachable')
+          "
+
+      Startup:
+        Script: |
+          python3 /var/gant/edge/startup.py \
+            --config '{configuration:/weighbridge/host}' \
+            --buffer-path '{configuration:/buffer/path}' \
+            --log-level '{configuration:/logging/level}'
+
+      Run:
+        Script: |
+          python3 /var/gant/edge/main.py \
+            --weighbridge-host '{configuration:/weighbridge/host}' \
+            --weighbridge-port '{configuration:/weighbridge/port}' \
+            --nir-port '{configuration:/nir/port}' \
+            --nir-baud '{configuration:/nir/baud_rate}' \
+            --kerlink-host '{configuration:/kerlink_gateway/host}' \
+            --kerlink-port '{configuration:/kerlink_gateway/port}' \
+            --topic-prefix '{configuration:/iot_core/topic_prefix}' \
+            --buffer-path '{configuration:/buffer/path}' \
+            --buffer-max-mb '{configuration:/buffer/max_size_mb}' \
+            --log-level '{configuration:/logging/level}'
+
+      Shutdown:
+        Script: |
+          # Flush any remaining buffered readings before shutdown
+          python3 /var/gant/edge/flush_buffer.py \
+            --buffer-path '{configuration:/buffer/path}' \
+            --topic-prefix '{configuration:/iot_core/topic_prefix}'
+
+      Recover:
+        Script: |
+          # On crash recovery flush buffer and restart
+          python3 /var/gant/edge/flush_buffer.py \
+            --buffer-path '{configuration:/buffer/path}' \
+            --topic-prefix '{configuration:/iot_core/topic_prefix}'
+
+    Artifacts:
+      - URI: "s3://gant-greengrass-artifacts/com.gant.facility.edge/1.0.0/edge.zip"
+        Unarchive: ZIP
+        Permission:
+          Execute: OWNER
+
+---
+# Local buffer component -- runs independently of main edge process
+# Monitors connectivity and flushes buffered readings on reconnect
+
+RecipeFormatVersion: "2020-01-25"
+ComponentName: com.gant.facility.buffer-monitor
+ComponentVersion: "1.0.0"
+ComponentDescription: >
+  Monitors IoT Core connectivity. On reconnection after an outage,
+  flushes all buffered sensor readings in original timestamp order.
+  Readings older than 72 hours are discarded and flagged in the
+  operations log. Buffer capacity is 4GB -- sufficient for 72 hours
+  of facility telemetry at 5-minute sensor intervals.
+ComponentPublisher: GANT Global Ltd
+
+ComponentConfiguration:
+  DefaultConfiguration:
+    check_interval_seconds: 60
+    buffer_path: "/var/gant/buffer"
+    max_age_hours: 72
+    flush_batch_size: 100
+    iot_topic: "gant/facility/backfill"
+
+Manifests:
+  - Platform:
+      os: linux
+    Lifecycle:
+      Run:
+        Script: |
+          python3 /var/gant/edge/buffer_monitor.py \
+            --check-interval '{configuration:/check_interval_seconds}' \
+            --buffer-path '{configuration:/buffer_path}' \
+            --max-age-hours '{configuration:/max_age_hours}' \
+            --flush-batch-size '{configuration:/flush_batch_size}' \
+            --iot-topic '{configuration:/iot_topic}'
+
+---
+# IPC authorisation policy
+# Grants edge components permission to publish to IoT Core
+# and read from local configuration store
+
+accessControl:
+  aws.greengrass.ipc.mqttproxy:
+    com.gant.facility.edge:mqttproxy:1:
+      policyDescription: "Allow facility edge to publish telemetry to IoT Core"
+      operations:
+        - "aws.greengrass#PublishToIoTCore"
+      resources:
+        - "gant/facility/*"
+  aws.greengrass.ipc.mqttproxy:
+    com.gant.facility.buffer-monitor:mqttproxy:1:
+      policyDescription: "Allow buffer monitor to publish backfilled readings"
+      operations:
+        - "aws.greengrass#PublishToIoTCore"
+      resources:
+        - "gant/facility/backfill"
+  aws.greengrass.ipc.cda:
+    com.gant.facility.edge:cda:1:
+      policyDescription: "Allow edge component to retrieve certificates"
+      operations:
+        - "aws.greengrass#GetClientDeviceAuthToken"
+        - "aws.greengrass#VerifyClientDeviceIdentity"
